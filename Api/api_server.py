@@ -1,4 +1,5 @@
-from flask import Flask
+import json
+from flask import Flask, request
 from flask_restful import Resource, Api
 from Control.Protocol.ProtocolService import ProtocolService
 from Domain.Mediators.ProtocolMediator import ProtocolMediator
@@ -12,15 +13,19 @@ api = Api(app)
 protocolMediator = ProtocolMediator()
 protocolService = ProtocolService(protocolMediator)
 
-class Protocols(Resource):
+class ProtocolsReports(Resource):
     def get(self):
         time.sleep(0.5)
+        args = request.args
+        print (args) # For debugging
+        teacher_id = args['teacher_id']
+        return protocolService.getTeachersProtocolsReports(teacher_id)
         protocolsItems = [{"id": 0, "creation_date": "nieustalona", "character": "Hospitowany", "course": "Analiza matematyczna", "committee_head": "Adam Kowalski", "status": "Utworzony"},
                         {"id": 1, "creation_date": "2021-12-10 15:15", "character": "Hospitujący", "course": "Analiza matematyczna", "committee_head": "Adam Kowalski", "status": "Wystawiony"},
                         {"id": 2, "creation_date": "2022-02-10 15:15", "character": "Hospitowany", "course": "Analiza matematyczna", "committee_head": "Adam Kowalski", "status": "Edytowany"}]
         return protocolsItems
 
-api.add_resource(Protocols, '/protocols')
+api.add_resource(ProtocolsReports, '/protocols/reports')
 
 def run_server():
     app.run(debug=True)

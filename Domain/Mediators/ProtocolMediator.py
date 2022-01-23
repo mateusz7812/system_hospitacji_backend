@@ -1,9 +1,9 @@
 import contextlib
 from typing import List
 from Domain.Business_objects.Protocol import Protocol
+from Domain.Business_objects.ProtocolReport import ProtocolReport
 from Foundation.DB_adapter import db
 from Domain.Business_objects.ProtocolStatus import ProtocolStatus
-
 from sqlalchemy.orm import sessionmaker
 
 
@@ -45,4 +45,23 @@ class ProtocolMediator:
         session = getSession()
         session.add(protocol)
         session.commit()
+
+    def getTeacherProtocolsReports(self, teacher_id):
+        
+        session = getSession()
+        reports: List[ProtocolReport] = []
+        query = session.query(db.Protokol, db.Hospitacja).join(db.Hospitacja, db.Hospitacja.ID == db.Protokol.HospitacjaID).filter(db.Hospitacja.Nauczyciel_akademickiID == teacher_id).all()
+        for s in query:
+            print(s)
+            report = ProtocolReport(
+                s.Protokol.ID,
+                s.Protokol.Data_utworzenia,
+                "Hospitowany",
+                "",
+                "",
+                ""
+                #s.Nazwa_kursu,
+            )
+            reports.append(report)
+        return reports
 
