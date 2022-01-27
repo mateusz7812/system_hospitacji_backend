@@ -82,11 +82,11 @@ class KomisjaHospitujaca(Base):
     __tablename__ = 'Komisja_hospitujaca'
 
     ID = Column(String(25), primary_key=True)
-    Nauczyciel_akademickiID = Column(ForeignKey(
+    PrzewodniczacyID = Column(ForeignKey(
         'Nauczyciel_akademicki.ID'), nullable=False, index=True)
 
     Nauczyciel_akademicki = relationship('NauczycielAkademicki')
-    Nauczyciel_akademicki1 = relationship(
+    Czlonkowie = relationship(
         'NauczycielAkademicki', secondary='Komisja_hospitujaca_Nauczyciel_akademicki')
 
 
@@ -108,7 +108,7 @@ class Hospitacja(Base):
     Harmonogram_hospitacjiID = Column(ForeignKey(
         'Harmonogram_hospitacji.ID'), nullable=False, index=True)
     ZajeciaID = Column(ForeignKey('Zajecia.ID'), nullable=False, index=True)
-    Komisja_hospitującaID = Column(ForeignKey(
+    Komisja_hospitujacaID = Column(ForeignKey(
         'Komisja_hospitujaca.ID'), nullable=False, index=True)
     Data_przeprowadzenia = Column(Date)
 
@@ -139,8 +139,9 @@ class Protokol(Base):
     Data_wystawienia = Column(Date)
     Data_podpisu = Column(Date)
     Data_odwolania = Column(Date)
-    HospitacjaID = Column(ForeignKey('Hospitacja.ID'), nullable=True, index=True)
-    
+    HospitacjaID = Column(ForeignKey('Hospitacja.ID'),
+                          nullable=True, index=True)
+
     Hospitacja = relationship('Hospitacja')
     Komisja_hospitujaca = relationship('KomisjaHospitujaca')
 
@@ -164,12 +165,14 @@ def cleanUpDB() -> None:
             con.execute(table.delete())
         trans.commit()
 
+
 def getSession():
     return sessionmaker(bind=engine)()
 
+
 def initialize_db():
     session = getSession()
-    
+
     kurs = Kurs()
     kurs.ID = "123kurs"
     kurs.Nazwa_kursu = "Analiza matematyczna"
@@ -203,6 +206,16 @@ def initialize_db():
     hospitujacy.Haslo = "1234"
     session.add(hospitujacy)
 
+    hospitujacy2 = NauczycielAkademicki()
+    hospitujacy2.ID = "345nauczyciel"
+    hospitujacy2.Pesel = "12312312312"
+    hospitujacy2.Należy_do_ZHZ = 1
+    hospitujacy2.Tytul = 0
+    hospitujacy2.Imie = "Anna"
+    hospitujacy2.Nazwisko = "Kowalska"
+    hospitujacy2.Haslo = "1234"
+    # session.add(hospitujacy2)
+
     hospitowany = NauczycielAkademicki()
     hospitowany.ID = "234nauczyciel"
     hospitowany.Pesel = "23423423423"
@@ -216,7 +229,8 @@ def initialize_db():
 
     komisja = KomisjaHospitujaca()
     komisja.ID = "123komisja"
-    komisja.Nauczyciel_akademickiID = hospitujacy.ID
+    komisja.PrzewodniczacyID = hospitujacy.ID
+    komisja.Czlonkowie.append(hospitujacy2)
     session.add(komisja)
 
     harmonogram = HarmonogramHospitacji()
@@ -228,7 +242,7 @@ def initialize_db():
     hospitacja.Harmonogram_hospitacjiID = harmonogram.ID
     hospitacja.Data_przeprowadzenia = datetime(2022, 1, 28, 10, 45)
     hospitacja.ID = "123hospitacja"
-    hospitacja.Komisja_hospitującaID = komisja.ID
+    hospitacja.Komisja_hospitujacaID = komisja.ID
     hospitacja.Nauczyciel_akademickiID = hospitowany.ID
     hospitacja.ZajeciaID = zajecia.ID
     session.add(hospitacja)
@@ -237,6 +251,26 @@ def initialize_db():
     pytanie.ID = "123pytanie"
     pytanie.Tresc = "{punktualnie:tak/nie}Czy zajęcia odbyły się punktualnie, opóźnienie {opoznienie:int}"
     session.add(pytanie)
+
+    pytanie1 = Pytanie()
+    pytanie1.ID = "234pytanie"
+    pytanie1.Tresc = "{sprawdzono:tak/nie/nie_dotyczy}Czy sprawdzono obecność studentów\nJeśli tak - liczba obecnych {obecni:int} / zapisanych {zapisani:int}"
+    session.add(pytanie1)
+
+    pytanie2 = Pytanie()
+    pytanie2.ID = "345pytanie"
+    pytanie2.Tresc = "{przystosowane:tak/nie}Czy sala i jej wyposażenie są przystosowane do formy prowadzonych zajęć.\nJeżeli nie, to z jakich powodów {powody:text_area}"
+    session.add(pytanie2)
+
+    pytanie3 = Pytanie()
+    pytanie3.ID = "456pytanie"
+    pytanie3.Tresc = "{zgodna:tak/nie}Treść zajęć jest zgodna z programem kursu i umożliwia osiągnięcie założonych efektów uczenia się ujętych w Karcie Przedmiotu"
+    session.add(pytanie3)
+
+    pytanie4 = Pytanie()
+    pytanie4.ID = "567pytanie"
+    pytanie4.Tresc = "{uwagi:text_area}Inne uwagi, wnioski i zalecenia dotyczące formalnej strony zajęć:"
+    session.add(pytanie4)
 
     protokol = Protokol()
     protokol.ID = "123protokol"

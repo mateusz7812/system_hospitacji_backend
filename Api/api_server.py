@@ -15,17 +15,30 @@ protocolService = ProtocolService(protocolMediator)
 
 class ProtocolsReports(Resource):
     def get(self):
-        time.sleep(0.5)
         args = request.args
-        print (args) # For debugging
         teacher_id = args['teacher_id']
         return protocolService.getTeachersProtocolsReports(teacher_id)
-        protocolsItems = [{"id": 0, "creation_date": "nieustalona", "character": "Hospitowany", "course": "Analiza matematyczna", "committee_head": "Adam Kowalski", "status": "Utworzony"},
-                        {"id": 1, "creation_date": "2021-12-10 15:15", "character": "Hospitujący", "course": "Analiza matematyczna", "committee_head": "Adam Kowalski", "status": "Wystawiony"},
-                        {"id": 2, "creation_date": "2022-02-10 15:15", "character": "Hospitowany", "course": "Analiza matematyczna", "committee_head": "Adam Kowalski", "status": "Edytowany"}]
-        return protocolsItems
+
+class Protocols(Resource):
+    def get(self, protocol_id: str):
+        return protocolService.getProtocolDetails(protocol_id)
+
+class Answers(Resource):
+    def get(self, protocol_id):
+        return protocolService.getProtocolAnswers(protocol_id)
+
+    def post(self, protocol_id):
+        answers = request.json
+        return protocolService.saveProtocolAnswers(protocol_id, answers)
+
+class Questions(Resource):
+    def get(self):
+        return protocolService.getQuestions()
 
 api.add_resource(ProtocolsReports, '/protocols/reports')
+api.add_resource(Protocols, '/protocols/<protocol_id>')
+api.add_resource(Answers, '/protocols/<protocol_id>/answers')
+api.add_resource(Questions, '/protocols/questions')
 
 def run_server():
     app.run(debug=True)
