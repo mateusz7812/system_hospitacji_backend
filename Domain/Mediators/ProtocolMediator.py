@@ -23,10 +23,14 @@ def get_session():
 
 
 def status_to_str(statusInt):
-    if(statusInt == 0):
+    if(statusInt == ProtocolStatus.UTWORZONY.value):
         return "Utworzony"
-    elif(statusInt == 1):
+    elif(statusInt == ProtocolStatus.EDYTOWANY.value):
         return "Edytowany"
+    elif(statusInt == ProtocolStatus.PODPISANY.value):
+        return "Podpisany"
+    elif(statusInt == ProtocolStatus.WYSTAWIONY.value):
+        return "Wystawiony"
     else:
         return "Inny"
 
@@ -113,6 +117,7 @@ class ProtocolMediator:
         session = get_session()
         protocols: List[Protocol] = []
         query = session.query(db.Protokol).all()
+        session.close()
         for s in query:
             protocol = self.get_protocol_from_model(s)
             protocols.append(protocol)
@@ -133,6 +138,7 @@ class ProtocolMediator:
         session = get_session()
         session.add(protocol)
         session.commit()
+        session.close()
 
     def getTeacherProtocolsReports(self, teacher_id):
         session = get_session()
@@ -140,7 +146,7 @@ class ProtocolMediator:
         nauczyciele = aliased(db.NauczycielAkademicki)
         query1 = session.query(db.Protokol.ID, db.Protokol.Data_utworzenia, db.Protokol.Status, literal("Hospitowany").label("Charakter"), db.Kurs.Nazwa_kursu, db.KomisjaHospitujaca.PrzewodniczacyID, nauczyciele.Imie, nauczyciele.Nazwisko)\
             .join(db.Hospitacja, db.Hospitacja.ID == db.Protokol.HospitacjaID)\
-            .filter(db.Hospitacja.Nauczyciel_akademickiID == teacher_id)\
+            .filter(db.Hospitacja.HospitowanyID == teacher_id)\
             .join(db.Zajecia, db.Hospitacja.ZajeciaID == db.Zajecia.ID)\
             .join(db.Kurs, db.Zajecia.KursID == db.Kurs.ID)\
             .join(db.KomisjaHospitujaca, db.KomisjaHospitujaca.ID == db.Protokol.Komisja_hospitujacaID)\
@@ -156,6 +162,7 @@ class ProtocolMediator:
             .join(nauczyciele, db.KomisjaHospitujaca.PrzewodniczacyID == nauczyciele.ID)
 
         union_query = query1.union(query2).all()
+        session.close()
         for s in union_query:
             report = ProtocolReport(
                 s.ID,
@@ -178,7 +185,7 @@ class ProtocolMediator:
                               db.GrupaZajeciowa.Dzien_tygodnia)\
             .filter(db.Protokol.ID == protocol_id)\
             .join(db.Hospitacja, db.Hospitacja.ID == db.Protokol.HospitacjaID)\
-            .join(db.NauczycielAkademicki, db.NauczycielAkademicki.ID == db.Hospitacja.Nauczyciel_akademickiID)\
+            .join(db.NauczycielAkademicki, db.NauczycielAkademicki.ID == db.Hospitacja.HospitowanyID)\
             .join(db.Zajecia, db.Zajecia.ID == db.Hospitacja.ZajeciaID)\
             .join(db.Kurs, db.Kurs.ID == db.Zajecia.KursID)\
             .join(db.GrupaZajeciowa, db.GrupaZajeciowa.ZajeciaID == db.Zajecia.ID)\
@@ -189,10 +196,11 @@ class ProtocolMediator:
         if len(query) == 1:
             hospitals = session.query(db.KomisjaHospitujaca)\
                 .filter(db.KomisjaHospitujaca.ID == query[0].Komisja_hospitujacaID).one().Czlonkowie
-
+            session.close()
             protocol_details = ProtocolDetails(get_protocol_from_model(query[0].Protokol), get_teacher_from_model(query[0].NauczycielAkademicki), list(
                 map(get_teacher_from_model, hospitals)), get_course_from_model(query[0].Kurs), get_group_from_model(query[0].GrupaZajeciowa))
             return protocol_details
+        session.close()
         return None
 
     def getProtocolAnswers(self, protocol_id):
@@ -200,6 +208,7 @@ class ProtocolMediator:
         query = session.query(db.Odpowiedz)\
             .filter(db.Odpowiedz.ProtokolID == protocol_id)\
             .all()
+        session.close()
         return list(map(get_answer_from_model, query))
 
     def saveProtocolAnswer(self, protocol_id, answer: Answer):
@@ -219,8 +228,18 @@ class ProtocolMediator:
             odpowiedz = query[0]
         odpowiedz.Tresc = answer.text
         session.commit()
+        session.close()
 
     def getQuestions(self):
         session = get_session()
         query = session.query(db.Pytanie).all()
+        session.close()
         return list(map(get_question_from_model, query))
+
+    def signProtocol(self, protocol_id):
+        session = get_session()
+        query = session.query(db.Protokol).filter(db.Protokol.ID == protocol_id).all()
+        query[0].Status = ProtocolStatus.PODPISANY.value
+        session.commit()
+        session.close()
+        return True

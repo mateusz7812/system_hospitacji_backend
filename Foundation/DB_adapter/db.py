@@ -10,6 +10,8 @@ from sqlalchemy_utils import database_exists, create_database
 from sqlalchemy.orm import sessionmaker
 import os
 
+from Domain.Business_objects.ProtocolStatus import ProtocolStatus
+
 Base = declarative_base()
 metadata = Base.metadata
 
@@ -103,7 +105,7 @@ class Hospitacja(Base):
     __tablename__ = 'Hospitacja'
 
     ID = Column(String(25), primary_key=True)
-    Nauczyciel_akademickiID = Column(ForeignKey(
+    HospitowanyID = Column(ForeignKey(
         'Nauczyciel_akademicki.ID'), nullable=False, index=True)
     Harmonogram_hospitacjiID = Column(ForeignKey(
         'Harmonogram_hospitacji.ID'), nullable=False, index=True)
@@ -181,71 +183,102 @@ def initialize_db():
     kurs.Semestr = 3
     session.add(kurs)
 
-    zajecia = Zajecia()
-    zajecia.ID = "123zajecia"
-    zajecia.KursID = kurs.ID
-    session.add(zajecia)
+    zajecia1 = Zajecia()
+    zajecia1.ID = "123zajecia"
+    zajecia1.KursID = kurs.ID
+    session.add(zajecia1)
 
-    grupa_zajeciowa = GrupaZajeciowa()
-    grupa_zajeciowa.ID = "123grupa"
-    grupa_zajeciowa.ZajeciaID = zajecia.ID
-    grupa_zajeciowa.Forma = 0
-    grupa_zajeciowa.Dzien_tygodnia = 0
-    grupa_zajeciowa.Budynek = "A1"
-    grupa_zajeciowa.Sala = "123a"
-    grupa_zajeciowa.Godzina = time(10, 45)
-    session.add(grupa_zajeciowa)
+    zajecia2 = Zajecia()
+    zajecia2.ID = "234zajecia"
+    zajecia2.KursID = kurs.ID
+    session.add(zajecia2)
 
-    hospitujacy = NauczycielAkademicki()
-    hospitujacy.ID = "123nauczyciel"
-    hospitujacy.Pesel = "12312312312"
-    hospitujacy.Należy_do_ZHZ = 1
-    hospitujacy.Tytul = 0
-    hospitujacy.Imie = "Jan"
-    hospitujacy.Nazwisko = "Kowalski"
-    hospitujacy.Haslo = "1234"
-    session.add(hospitujacy)
+    grupa_zajeciowa1 = GrupaZajeciowa()
+    grupa_zajeciowa1.ID = "123grupa"
+    grupa_zajeciowa1.ZajeciaID = zajecia1.ID
+    grupa_zajeciowa1.Forma = 0
+    grupa_zajeciowa1.Dzien_tygodnia = 0
+    grupa_zajeciowa1.Budynek = "A1"
+    grupa_zajeciowa1.Sala = "123a"
+    grupa_zajeciowa1.Godzina = time(10, 45)
+    session.add(grupa_zajeciowa1)
 
-    hospitujacy2 = NauczycielAkademicki()
-    hospitujacy2.ID = "345nauczyciel"
-    hospitujacy2.Pesel = "12312312312"
-    hospitujacy2.Należy_do_ZHZ = 1
-    hospitujacy2.Tytul = 0
-    hospitujacy2.Imie = "Anna"
-    hospitujacy2.Nazwisko = "Kowalska"
-    hospitujacy2.Haslo = "1234"
-    # session.add(hospitujacy2)
+    grupa_zajeciowa2 = GrupaZajeciowa()
+    grupa_zajeciowa2.ID = "234grupa"
+    grupa_zajeciowa2.ZajeciaID = zajecia2.ID
+    grupa_zajeciowa2.Forma = 0
+    grupa_zajeciowa2.Dzien_tygodnia = 1
+    grupa_zajeciowa2.Budynek = "A1"
+    grupa_zajeciowa2.Sala = "123a"
+    grupa_zajeciowa2.Godzina = time(10, 45)
+    session.add(grupa_zajeciowa2)
 
-    hospitowany = NauczycielAkademicki()
-    hospitowany.ID = "234nauczyciel"
-    hospitowany.Pesel = "23423423423"
-    hospitowany.Należy_do_ZHZ = 1
-    hospitowany.Tytul = 0
-    hospitowany.Imie = "Adam"
-    hospitowany.Nazwisko = "Kowalski"
-    hospitowany.Haslo = "1234"
-    hospitowany.Zajecia.append(zajecia)
-    session.add(hospitowany)
+    nauczyciel1 = NauczycielAkademicki()
+    nauczyciel1.ID = "123nauczyciel"
+    nauczyciel1.Pesel = "12312312312"
+    nauczyciel1.Należy_do_ZHZ = 1
+    nauczyciel1.Tytul = 0
+    nauczyciel1.Imie = "Jan"
+    nauczyciel1.Nazwisko = "Kowalski"
+    nauczyciel1.Haslo = "1234"
+    nauczyciel1.Zajecia.append(zajecia2)
+    session.add(nauczyciel1)
 
-    komisja = KomisjaHospitujaca()
-    komisja.ID = "123komisja"
-    komisja.PrzewodniczacyID = hospitujacy.ID
-    komisja.Czlonkowie.append(hospitujacy2)
-    session.add(komisja)
+    nauczyciel2 = NauczycielAkademicki()
+    nauczyciel2.ID = "345nauczyciel"
+    nauczyciel2.Pesel = "12312352312"
+    nauczyciel2.Należy_do_ZHZ = 1
+    nauczyciel2.Tytul = 0
+    nauczyciel2.Imie = "Anna"
+    nauczyciel2.Nazwisko = "Kowalska"
+    nauczyciel2.Haslo = "1234"
+    session.add(nauczyciel2)
+
+    nauczyciel3 = NauczycielAkademicki()
+    nauczyciel3.ID = "234nauczyciel"
+    nauczyciel3.Pesel = "23423423423"
+    nauczyciel3.Należy_do_ZHZ = 1
+    nauczyciel3.Tytul = 0
+    nauczyciel3.Imie = "Adam"
+    nauczyciel3.Nazwisko = "Kowalski"
+    nauczyciel3.Haslo = "1234"
+    nauczyciel3.Zajecia.append(zajecia1)
+    session.add(nauczyciel3)
+
+    komisja1 = KomisjaHospitujaca()
+    komisja1.ID = "123komisja"
+    komisja1.PrzewodniczacyID = nauczyciel1.ID
+    komisja1.Czlonkowie.append(nauczyciel2)
+    session.add(komisja1)
+    
+    komisja2 = KomisjaHospitujaca()
+    komisja2.ID = "234komisja"
+    komisja2.PrzewodniczacyID = nauczyciel3.ID
+    komisja2.Czlonkowie.append(nauczyciel2)
+    session.add(komisja2)
 
     harmonogram = HarmonogramHospitacji()
     harmonogram.ID = "123harmonogram"
     harmonogram.Data_opracowania = datetime(2021, 11, 28, 10, 45)
     session.add(harmonogram)
 
-    hospitacja = Hospitacja()
-    hospitacja.Harmonogram_hospitacjiID = harmonogram.ID
-    hospitacja.Data_przeprowadzenia = datetime(2022, 1, 28, 10, 45)
-    hospitacja.ID = "123hospitacja"
-    hospitacja.Komisja_hospitujacaID = komisja.ID
-    hospitacja.Nauczyciel_akademickiID = hospitowany.ID
-    hospitacja.ZajeciaID = zajecia.ID
-    session.add(hospitacja)
+    hospitacja1 = Hospitacja()
+    hospitacja1.Harmonogram_hospitacjiID = harmonogram.ID
+    hospitacja1.Data_przeprowadzenia = datetime(2022, 1, 28, 10, 45)
+    hospitacja1.ID = "123hospitacja"
+    hospitacja1.Komisja_hospitujacaID = komisja1.ID
+    hospitacja1.HospitowanyID = nauczyciel3.ID
+    hospitacja1.ZajeciaID = zajecia1.ID
+    session.add(hospitacja1)
+
+    hospitacja2 = Hospitacja()
+    hospitacja2.Harmonogram_hospitacjiID = harmonogram.ID
+    hospitacja2.Data_przeprowadzenia = datetime(2022, 1, 28, 10, 45)
+    hospitacja2.ID = "234hospitacja"
+    hospitacja2.Komisja_hospitujacaID = komisja2.ID
+    hospitacja2.HospitowanyID = nauczyciel1.ID
+    hospitacja2.ZajeciaID = zajecia2.ID
+    session.add(hospitacja2)
 
     pytanie = Pytanie()
     pytanie.ID = "123pytanie"
@@ -272,21 +305,37 @@ def initialize_db():
     pytanie4.Tresc = "{uwagi:text_area}Inne uwagi, wnioski i zalecenia dotyczące formalnej strony zajęć:"
     session.add(pytanie4)
 
-    protokol = Protokol()
-    protokol.ID = "123protokol"
-    protokol.Komisja_hospitujacaID = komisja.ID
-    protokol.Zapoznano_sie_z_karta_przedmiotu = 1
-    protokol.Status = 0
-    protokol.HospitacjaID = hospitacja.ID
-    protokol.Data_utworzenia = datetime(2022, 1, 20, 10)
-    session.add(protokol)
+    protokol1 = Protokol()
+    protokol1.ID = "123protokol"
+    protokol1.Komisja_hospitujacaID = komisja1.ID
+    protokol1.Zapoznano_sie_z_karta_przedmiotu = 1
+    protokol1.Status = ProtocolStatus.EDYTOWANY.value
+    protokol1.HospitacjaID = hospitacja1.ID
+    protokol1.Data_utworzenia = datetime(2022, 1, 20, 10)
+    session.add(protokol1)
 
-    odpowiedz = Odpowiedz()
-    odpowiedz.ID = "123odpowiedz"
-    odpowiedz.ProtokolID = protokol.ID
-    odpowiedz.PytanieID = pytanie.ID
-    odpowiedz.Tresc = str(json.dumps({"punktualnie": "tak", "opoznienie": 10}))
-    session.add(odpowiedz)
+    protokol2 = Protokol()
+    protokol2.ID = "2234protokol"
+    protokol2.Komisja_hospitujacaID = komisja2.ID
+    protokol2.Zapoznano_sie_z_karta_przedmiotu = 1
+    protokol2.Status = ProtocolStatus.WYSTAWIONY.value
+    protokol2.HospitacjaID = hospitacja2.ID
+    protokol2.Data_utworzenia = datetime(2022, 1, 20, 10)
+    session.add(protokol2)
+
+    odpowiedz1 = Odpowiedz()
+    odpowiedz1.ID = "123odpowiedz"
+    odpowiedz1.ProtokolID = protokol1.ID
+    odpowiedz1.PytanieID = pytanie.ID
+    odpowiedz1.Tresc = str(json.dumps({"punktualnie": "nie", "opoznienie": 10}))
+    session.add(odpowiedz1)
+
+    odpowiedz2 = Odpowiedz()
+    odpowiedz2.ID = "234odpowiedz"
+    odpowiedz2.ProtokolID = protokol2.ID
+    odpowiedz2.PytanieID = pytanie.ID
+    odpowiedz2.Tresc = str(json.dumps({"punktualnie": "tak"}))
+    session.add(odpowiedz2)
 
     session.commit()
 

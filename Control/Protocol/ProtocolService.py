@@ -49,3 +49,7 @@ class ProtocolService():
         questions = self.protocolMediator.getQuestions()
         questions = list(map(lambda x: x.__dict__, questions))
         return questions
+    
+    def signProtocol(self, protocol_id):
+        return self.protocolMediator.signProtocol(protocol_id)
+

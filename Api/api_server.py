@@ -19,9 +19,16 @@ class ProtocolsReports(Resource):
         teacher_id = args['teacher_id']
         return protocolService.getTeachersProtocolsReports(teacher_id)
 
-class Protocols(Resource):
+
+class Protocol(Resource):
     def get(self, protocol_id: str):
         return protocolService.getProtocolDetails(protocol_id)
+
+
+class ProtocolSign(Resource):
+    def get(self, protocol_id: str):
+        return protocolService.signProtocol(protocol_id)
+
 
 class Answers(Resource):
     def get(self, protocol_id):
@@ -31,12 +38,14 @@ class Answers(Resource):
         answers = request.json
         return protocolService.saveProtocolAnswers(protocol_id, answers)
 
+
 class Questions(Resource):
     def get(self):
         return protocolService.getQuestions()
 
 api.add_resource(ProtocolsReports, '/protocols/reports')
-api.add_resource(Protocols, '/protocols/<protocol_id>')
+api.add_resource(ProtocolSign, '/protocols/<protocol_id>/sign')
+api.add_resource(Protocol, '/protocols/<protocol_id>')
 api.add_resource(Answers, '/protocols/<protocol_id>/answers')
 api.add_resource(Questions, '/protocols/questions')
 
