@@ -40,10 +40,11 @@ class ProtocolService():
         return answers
 
     def saveProtocolAnswers(self, protocol_id, answers):
+        wrong_answers = []
         for answer_dict in answers:
             answer_obj = Answer(answer_dict["text"], answer_dict["question_id"])
-            self.protocolMediator.saveProtocolAnswer(protocol_id, answer_obj)
-        return '', 200
+            wrong_answers += self.protocolMediator.saveProtocolAnswer(protocol_id, answer_obj)
+        return wrong_answers, 200
     
     def getQuestions(self):
         questions = self.protocolMediator.getQuestions()

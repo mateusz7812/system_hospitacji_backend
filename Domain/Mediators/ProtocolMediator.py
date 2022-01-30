@@ -1,7 +1,8 @@
-import contextlib
+import re
 from typing import List
 import uuid
 from flask import session
+import json
 from sqlalchemy.orm import aliased
 from sqlalchemy import literal
 from Domain.Business_objects.Answer import Answer
@@ -111,6 +112,41 @@ def get_group_from_model(s: db.GrupaZajeciowa):
         s.Godzina.strftime("%H:%M")
     )
 
+def get_question_answers_for_protocol(protocol_id, question_id, session):
+    return session.query(db.Odpowiedz)\
+        .filter(db.Odpowiedz.ProtokolID == protocol_id)\
+        .filter(db.Odpowiedz.PytanieID == question_id)\
+        .all()
+
+def get_question_by_id(session, question_id):
+    query = session.query(db.Pytanie)\
+            .filter(db.Pytanie.ID == question_id)\
+            .all()
+    if len(query) == 1:
+        return query[0]
+    return None
+
+def answer_text_is_valid(question, answer):
+    if question.count(":") == 1:
+        return True
+    check = question[question.rindex(":")+1:-1]
+    x = answer
+    result = eval(check)
+    return result
+
+def get_field_name(field):
+    return field[1:field.index(':')]
+
+def get_fields_from_question(question):
+    regex = "{[a-z | 0-9 |: |\/|\>|_|=]*\}"
+    ret = re.findall(regex, question)
+    return ret
+
+def get_value_from_answer(answer, name):
+    answer_dict = json.loads(answer)
+    if name in answer_dict.keys():
+        return answer_dict[name]
+    return None
 
 class ProtocolMediator:
     def getAllProtocols(self) -> List[Protocol]:
@@ -119,7 +155,7 @@ class ProtocolMediator:
         query = session.query(db.Protokol).all()
         session.close()
         for s in query:
-            protocol = self.get_protocol_from_model(s)
+            protocol = get_protocol_from_model(s)
             protocols.append(protocol)
         return protocols
 
@@ -131,9 +167,6 @@ class ProtocolMediator:
         protocol.Komisja_hospitujacaID = p.hospitalization_commitee_id
         protocol.Status = p.status.value
         protocol.Data_utworzenia = p.creation_date
-        protocol.Data_wystawienia = p.issue_date
-        protocol.Data_podpisu = p.sign_date
-        protocol.Data_odwolania = p.appelation_date
 
         session = get_session()
         session.add(protocol)
@@ -213,22 +246,39 @@ class ProtocolMediator:
 
     def saveProtocolAnswer(self, protocol_id, answer: Answer):
         session = get_session()
-        query = session.query(db.Odpowiedz)\
-            .filter(db.Odpowiedz.ProtokolID == protocol_id)\
-            .filter(db.Odpowiedz.PytanieID == answer.question_id)\
-            .all()
+        pytanie = get_question_by_id(session, answer.question_id)
+        if pytanie is None:
+            return None
+        query = get_question_answers_for_protocol(protocol_id, answer.question_id, session)
         odpowiedz: db.Odpowiedz
         if len(query) == 0:
             odpowiedz = db.Odpowiedz()
             odpowiedz.ID = str(uuid.uuid4())[:25]
             odpowiedz.ProtokolID = protocol_id
             odpowiedz.PytanieID = answer.question_id
+            odpowiedz.Tresc = json.dumps({})
             session.add(odpowiedz)
         else:
             odpowiedz = query[0]
-        odpowiedz.Tresc = answer.text
+        fields = get_fields_from_question(pytanie.Tresc)
+        not_valid_fields = []
+        answer_text = json.loads(odpowiedz.Tresc)
+        for field in fields:
+            name = get_field_name(field)
+            value = get_value_from_answer(answer.text, name)
+            if value:
+                if answer_text_is_valid(field, value):
+                    answer_text[name] = value
+                else:
+                    not_valid_fields.append({
+                        "question_id": answer.question_id,
+                        "name": name
+                    })
+        odpowiedz.Tresc = json.dumps(answer_text)
         session.commit()
         session.close()
+        return not_valid_fields
+
 
     def getQuestions(self):
         session = get_session()

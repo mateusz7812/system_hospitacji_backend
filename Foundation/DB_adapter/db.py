@@ -282,7 +282,7 @@ def initialize_db():
 
     pytanie = Pytanie()
     pytanie.ID = "123pytanie"
-    pytanie.Tresc = "{punktualnie:tak/nie}Czy zajęcia odbyły się punktualnie, opóźnienie {opoznienie:int}"
+    pytanie.Tresc = "{punktualnie:tak/nie}Czy zajęcia odbyły się punktualnie, opóźnienie {opoznienie:int:x>=0}"
     session.add(pytanie)
 
     pytanie1 = Pytanie()
