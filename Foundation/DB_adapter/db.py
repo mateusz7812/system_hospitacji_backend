@@ -9,14 +9,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_utils import database_exists, create_database
 from sqlalchemy.orm import sessionmaker
 import os
+from .consts import DB_ADDRESS
 
 from Domain.Business_objects.ProtocolStatus import ProtocolStatus
 
 Base = declarative_base()
 metadata = Base.metadata
 
-db_path = os.path.join(os.path.dirname(__file__), 'sqlalchemy.sqlite')
-engine = create_engine(f'sqlite:///{db_path}')
+engine = create_engine(DB_ADDRESS)
 
 
 class HarmonogramHospitacji(Base):
