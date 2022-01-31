@@ -164,7 +164,8 @@ def cleanUpDB() -> None:
     with contextlib.closing(engine.connect()) as con:
         trans = con.begin()
         for table in reversed(metadata.sorted_tables):
-            con.execute(table.delete())
+            if engine.dialect.has_table(engine, table.name):
+                con.execute(table.delete())
         trans.commit()
 
 
