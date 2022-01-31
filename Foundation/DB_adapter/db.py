@@ -1,7 +1,6 @@
 import contextlib
 from datetime import datetime, time
 import json
-from sqlalchemy import Column, Date, ForeignKey, Integer, String, Table
 from sqlalchemy import Column, Date, ForeignKey, Integer, String, Table, create_engine
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.mysql import TIME
@@ -164,7 +163,7 @@ def cleanUpDB() -> None:
     with contextlib.closing(engine.connect()) as con:
         trans = con.begin()
         for table in reversed(metadata.sorted_tables):
-            if engine.dialect.has_table(engine, table.name):
+            if engine.dialect.has_table(con, table.name):
                 con.execute(table.delete())
         trans.commit()
 
@@ -341,7 +340,10 @@ def initialize_db():
     session.commit()
 
 
-if not database_exists(engine.url):
-    create_database(engine.url)
-    metadata.create_all(engine)
+if __name__ == '__main__':
+    metadata.create_all(
+        engine,
+        metadata.tables.values(),
+        checkfirst=True
+    )
     initialize_db()
