@@ -85,7 +85,7 @@ def give_greeting():
 
 
 def run_server():
-    app.run(port=8000, debug=debug)
+    app.run(port=80, debug=debug)
 
 
 if __name__ == '__main__':
