@@ -13,6 +13,6 @@ class TestService():
 
     def check_ping(self):
         hostname = "google.com"
-        return os.system("ping " + hostname)
+        return os.system("ping -c 4 " + hostname)
         
         
