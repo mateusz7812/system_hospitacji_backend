@@ -80,7 +80,7 @@ def get_course_from_model(s: db.Kurs):
     return Course(
         s.ID,
         s.Nazwa_kursu,
-        "I" * s.Stopien_studiów,
+        "I" * s.Stopien_studiow,
         course_form_to_str(s.Forma_studiow),
         s.Semestr
     )
@@ -98,7 +98,7 @@ def get_teacher_from_model(s: db.NauczycielAkademicki):
         s.Imie,
         s.Nazwisko,
         str(s.Tytul),
-        s.Należy_do_ZHZ == 1
+        s.Nalezy_do_ZHZ == 1
     )
 
 

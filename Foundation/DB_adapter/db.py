@@ -15,7 +15,7 @@ from Domain.Business_objects.ProtocolStatus import ProtocolStatus
 Base = declarative_base()
 metadata = Base.metadata
 
-engine = create_engine(DB_ADDRESS)
+engine = create_engine(DB_ADDRESS, pool_recycle=30)
 
 
 class HarmonogramHospitacji(Base):
@@ -30,7 +30,7 @@ class Kurs(Base):
 
     ID = Column(String(25), primary_key=True)
     Nazwa_kursu = Column(String(25), nullable=False)
-    Stopien_studiów = Column(Integer, nullable=False)
+    Stopien_studiow = Column(Integer, nullable=False)
     Forma_studiow = Column(Integer, nullable=False)
     Semestr = Column(Integer, nullable=False)
 
@@ -40,7 +40,7 @@ class NauczycielAkademicki(Base):
 
     ID = Column(String(25), primary_key=True)
     Pesel = Column(String(11), nullable=False)
-    Należy_do_ZHZ = Column(Integer)
+    Nalezy_do_ZHZ = Column(Integer)
     Tytul = Column(Integer, nullable=False)
     Imie = Column(String(25), nullable=False)
     Nazwisko = Column(String(35), nullable=False)
@@ -160,12 +160,14 @@ class Odpowiedz(Base):
 
 
 def cleanUpDB() -> None:
+    print("INFO: cleaning db starts...")
     with contextlib.closing(engine.connect()) as con:
         trans = con.begin()
         for table in reversed(metadata.sorted_tables):
             if engine.dialect.has_table(con, table.name):
                 con.execute(table.delete())
         trans.commit()
+    print("INFO: cleaning db ends")
 
 
 def getSession():
@@ -173,12 +175,13 @@ def getSession():
 
 
 def initialize_db():
+    print("INFO: initializing db starts...")
     session = getSession()
 
     kurs = Kurs()
     kurs.ID = "123kurs"
     kurs.Nazwa_kursu = "Analiza matematyczna"
-    kurs.Stopien_studiów = 1
+    kurs.Stopien_studiow = 1
     kurs.Forma_studiow = 0
     kurs.Semestr = 3
     session.add(kurs)
@@ -216,7 +219,7 @@ def initialize_db():
     nauczyciel1 = NauczycielAkademicki()
     nauczyciel1.ID = "123nauczyciel"
     nauczyciel1.Pesel = "12312312312"
-    nauczyciel1.Należy_do_ZHZ = 1
+    nauczyciel1.Nalezy_do_ZHZ = 1
     nauczyciel1.Tytul = 0
     nauczyciel1.Imie = "Jan"
     nauczyciel1.Nazwisko = "Kowalski"
@@ -227,7 +230,7 @@ def initialize_db():
     nauczyciel2 = NauczycielAkademicki()
     nauczyciel2.ID = "345nauczyciel"
     nauczyciel2.Pesel = "12312352312"
-    nauczyciel2.Należy_do_ZHZ = 1
+    nauczyciel2.Nalezy_do_ZHZ = 1
     nauczyciel2.Tytul = 0
     nauczyciel2.Imie = "Anna"
     nauczyciel2.Nazwisko = "Kowalska"
@@ -237,7 +240,7 @@ def initialize_db():
     nauczyciel3 = NauczycielAkademicki()
     nauczyciel3.ID = "234nauczyciel"
     nauczyciel3.Pesel = "23423423423"
-    nauczyciel3.Należy_do_ZHZ = 1
+    nauczyciel3.Nalezy_do_ZHZ = 1
     nauczyciel3.Tytul = 0
     nauczyciel3.Imie = "Adam"
     nauczyciel3.Nazwisko = "Kowalski"
@@ -338,6 +341,8 @@ def initialize_db():
     session.add(odpowiedz2)
 
     session.commit()
+    print("INFO: initializing db ends")
+
 
 
 if __name__ == '__main__':

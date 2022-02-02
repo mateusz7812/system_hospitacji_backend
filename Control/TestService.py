@@ -1,5 +1,6 @@
 
 from Domain.Mediators.TestMediator import TestMediator
+import os
 
 
 class TestService():
@@ -7,4 +8,11 @@ class TestService():
         self.testMediator = testMediator
 
     def clearDb(self):
+        print("INFO: service is clearing db")
         self.testMediator.clearDb()
+
+    def check_ping():
+        hostname = "google.com"
+        return os.system("ping -c 1 " + hostname)
+        
+        
