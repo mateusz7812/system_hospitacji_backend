@@ -60,4 +60,4 @@ jobs:
         with:
           app-name: 'system-hospitacji-rest-api'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_56247A9A96B54D8B94A74D9F94926964 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_6535F4DC6CFD464DBEB7F8B417FD437A }}
