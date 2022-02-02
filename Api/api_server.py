@@ -8,7 +8,7 @@ from flask_cors import CORS
 from Domain.Mediators.TestMediator import TestMediator
 import sys
 
-sys.stdout = open('D:\\home\\LogFiles\\app.log', 'w')
+#sys.stdout = open('D:\\home\\LogFiles\\app.log', 'w')
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
