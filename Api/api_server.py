@@ -1,25 +1,27 @@
-from flask import Flask, flash
+from ast import arg
+import json
+from flask import Flask, request, flash
 import flask
 from flask_restful import Resource, Api, reqparse
+from Control.Protocol.ProtocolService import ProtocolService
+from Control.Hospitation.HospitationService import HospitationService
+from Control.TestService import TestService
+from Domain.Business_objects.Teacher import Teacher
+from Domain.Mediators.ProtocolMediator import ProtocolMediator
+from Domain.Mediators.HospitationMediator import HospitationMediator
 from flask_cors import CORS
 import time
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import threading
 import queue
 
-interval = 15
+interval = 60
+
+from Domain.Mediators.TestMediator import TestMediator
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 api = Api(app)
-
-protocolsItems = [{"id": 0, "creation_date": "nieustalona", "character": "Hospitowany", "course": "Analiza matematyczna", "committee_head": "Adam Kowalski", "status": "Utworzony"},
-                        {"id": 1, "creation_date": "2021-12-10 15:15", "character": "Hospitujący", "course": "Analiza matematyczna", "committee_head": "Adam Kowalski", "status": "Wystawiony"},
-                        {"id": 2, "creation_date": "2022-02-10 15:15", "character": "Hospitowany", "course": "Analiza matematyczna", "committee_head": "Adam Kowalski", "status": "Edytowany"}]
-
-hospitationsItems = [{"id": 0, "creation_date": "nieustalona", "character": "Hospitowany", "course": "Analiza matematyczna", "committee_head": "Adam Kowalski", "status": "Utworzony"},
-                        {"id": 1, "creation_date": "2021-12-10 15:15", "character": "Hospitujący", "course": "Analiza matematyczna", "committee_head": "Adam Kowalski", "status": "Wystawiony"},
-                        {"id": 2, "creation_date": "2022-02-10 15:15", "character": "Hospitowany", "course": "Analiza matematyczna", "committee_head": "Adam Kowalski", "status": "Edytowany"}]
 
 class MessageAnnouncer:
 
@@ -38,82 +40,119 @@ class MessageAnnouncer:
             except queue.Full:
                 del self.listeners[i]
 
-class Protocols(Resource):
+testMediator = TestMediator()
+testService = TestService(testMediator)
+
+protocolMediator = ProtocolMediator()
+protocolService = ProtocolService(protocolMediator)
+
+hospitationMediator = HospitationMediator()
+hospitationService = HospitationService(hospitationMediator)
+
+debug = True
+
+class ProtocolsReports(Resource):
     def get(self):
-        #time.sleep(0.5)
-        return protocolsItems
- 
+        args = request.args
+        teacher_id = args['teacher_id']
+        return protocolService.getTeachersProtocolsReports(teacher_id)
+        
+
 class Hospitations(Resource):
     def get(self):
-        #time.sleep(0.5)
-        return hospitationsItems
+        args = request.args
+        teacher_id = args['teacher_id']
+        return hospitationService.getAllHospitations(teacher_id)
 
-    def post(self):
-        final_day = "2021-12-10 15:15"
-        parser = reqparse.RequestParser()
-        parser.add_argument('id', required=True)
-        parser.add_argument('date', required=True)
-        args= parser.parse_args()
-        finalDate = final_day#hospitationsItems[int(args['id'])]["final_day"]
-        changed_to= args['date']
+class HospitationsEdit(Resource):
+    def get(self):
+        args = request.args
+        hospitation_id = args['hospitation_id']
+        date = args['date']
+        return hospitationService.saveHospitationDate(hospitation_id, date)
 
-        finalDate_day = finalDate[0 : 10]
-        changed_to_day = changed_to[0:10]
-
-        finalDate_day = datetime.strptime(finalDate_day, "%Y-%m-%d")
-        changed_to_day = datetime.strptime(changed_to_day, "%Y-%m-%d")
-
-
-        if changed_to_day > finalDate_day:
-            return "400"
-        hospitationsItems[int(args['id'])]["creation_date"] = args['date']
-        return "ok"
-
-
-api.add_resource(Protocols, '/protocols')
-api.add_resource(Hospitations, '/hospitations')
 announcer = MessageAnnouncer()
 
 
 def format_sse(data: str, kurs: str, major: str, event=None) -> str:
     msg = f'data: {data}|{kurs}|{major}\n\n'
-    
-    # msg = f'data: {data}\n'
-    # msg += f'{kurs}\n'
-    # msg +=  f'{major}'
     return msg
-
-@app.route('/ping')
-def ping():
-    msg = format_sse(data='pong', kurs='grweg', major='hweoiufoueolinwsefkoube')
-    announcer.announce(msg=msg)
-    return {}, 200
 
 @app.route('/listen', methods=['GET'])
 def listen():
-
     def stream():
         messages = announcer.listen()  # returns a queue.Queue
         while True:
             msg = messages.get()  # blocks until a new message arrives
             yield msg
-
     return flask.Response(stream(), mimetype='text/event-stream')
 
 
 def myPeriodicFunction():
-    msg = format_sse(data='01.01.2020, 15:15', kurs='Logika dla informatyków', major='Jan Dąbrowski')
-    announcer.announce(msg=msg)
+    temp = hospitationService.getNotificationData()
+    msg = format_sse(data= temp[0], kurs=temp[1], major=temp[2])
+    selectedDate =  temp[0].split('-')
+    selectedDate = datetime(int(selectedDate[0]), int(selectedDate[1]), int(selectedDate[2][:2]))
+    if (selectedDate < datetime.now() + timedelta(days=7)) and selectedDate > datetime.now():
+        announcer.announce(msg=msg)
+    
 
 def startTimer():
     threading.Timer(interval, startTimer).start()
     myPeriodicFunction()
 
+class Protocol(Resource):
+    def get(self, protocol_id: str):
+        return protocolService.getProtocolDetails(protocol_id)
+
+
+class ProtocolSign(Resource):
+    def get(self, protocol_id: str):
+        return protocolService.signProtocol(protocol_id)
+
+
+class Answers(Resource):
+    def get(self, protocol_id):
+        return protocolService.getProtocolAnswers(protocol_id)
+
+    def post(self, protocol_id):
+        answers = request.json
+        return protocolService.saveProtocolAnswers(protocol_id, answers)
+
+
+class Questions(Resource):
+    def get(self):
+        return protocolService.getQuestions()
+
+
+class Testing(Resource):
+    def get(self, command):
+        if command == "clear_db":
+            testService.clearDb()
+        return True
+
+api.add_resource(ProtocolsReports, '/protocols/reports')
+api.add_resource(ProtocolSign, '/protocols/<protocol_id>/sign')
+api.add_resource(Protocol, '/protocols/<protocol_id>')
+api.add_resource(Answers, '/protocols/<protocol_id>/answers')
+api.add_resource(Questions, '/protocols/questions')
+api.add_resource(HospitationsEdit, '/hospitations/edit')
+api.add_resource(Hospitations, '/hospitations')
 
 def run_server():
     startTimer()
-    app.run(debug=True)
+    app.run(debug=debug)
 
 
 if __name__ == '__main__':
     run_server()
+
+if debug:
+    api.add_resource(Testing, '/test/<command>')
+
+
+
+
+
+
+
