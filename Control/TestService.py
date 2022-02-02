@@ -11,8 +11,8 @@ class TestService():
         print("INFO: service is clearing db")
         self.testMediator.clearDb()
 
-    def check_ping():
+    def check_ping(self):
         hostname = "google.com"
-        return os.system("ping -c 1 " + hostname)
+        return os.system("ping " + hostname)
         
         

@@ -60,7 +60,7 @@ class Testing(Resource):
             testService.clearDb()
         elif command == "heartbeat":
             return True
-        elif command == "ping_test":    
+        elif command == "ping":    
             response = testService.check_ping()
             if response == 0:
                 return True
