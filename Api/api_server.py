@@ -66,6 +66,8 @@ class Testing(Resource):
                 return True
             else:
                 return False
+        elif command == "db":
+            return testService.test_db_connection()
         return False
 
 

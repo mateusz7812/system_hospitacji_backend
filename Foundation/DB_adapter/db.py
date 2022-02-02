@@ -12,10 +12,14 @@ from .consts import DB_ADDRESS
 
 from Domain.Business_objects.ProtocolStatus import ProtocolStatus
 
+import logging
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+
 Base = declarative_base()
 metadata = Base.metadata
 
-engine = create_engine(DB_ADDRESS, pool_recycle=30)
+engine = create_engine(DB_ADDRESS, echo=True, pool_recycle=360)
 
 
 class HarmonogramHospitacji(Base):
@@ -158,20 +162,29 @@ class Odpowiedz(Base):
     Protokol = relationship('Protokol')
     Pytanie = relationship('Pytanie')
 
+def create_db():
+    metadata.create_all(
+        engine,
+        metadata.tables.values(),
+        checkfirst=True
+    )
 
 def cleanUpDB() -> None:
     print("INFO: cleaning db starts...")
     with contextlib.closing(engine.connect()) as con:
+        print("test cleaning")
         trans = con.begin()
         for table in reversed(metadata.sorted_tables):
             if engine.dialect.has_table(con, table.name):
                 con.execute(table.delete())
+        print("test cleaning")
         trans.commit()
     print("INFO: cleaning db ends")
 
 
 def getSession():
-    return sessionmaker(bind=engine)()
+    print("session creating")
+    return sessionmaker(autocommit=False, autoflush=True, bind=engine)()
 
 
 def initialize_db():
@@ -340,15 +353,12 @@ def initialize_db():
     odpowiedz2.Tresc = str(json.dumps({"punktualnie": "tak"}))
     session.add(odpowiedz2)
 
+    print("test")
     session.commit()
     print("INFO: initializing db ends")
 
 
 
 if __name__ == '__main__':
-    metadata.create_all(
-        engine,
-        metadata.tables.values(),
-        checkfirst=True
-    )
+    create_db()
     initialize_db()

@@ -14,5 +14,8 @@ class TestService():
     def check_ping(self):
         hostname = "google.com"
         return os.system("ping -c 4 " + hostname)
+    
+    def test_db_connection(self):
+        return self.testMediator.test_connection()
         
         
