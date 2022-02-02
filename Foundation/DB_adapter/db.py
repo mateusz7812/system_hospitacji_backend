@@ -10,14 +10,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_utils import database_exists, create_database
 from sqlalchemy.orm import sessionmaker
 import os
+from .consts import DB_ADDRESS
 
 from Domain.Business_objects.ProtocolStatus import ProtocolStatus
 
 Base = declarative_base()
 metadata = Base.metadata
 
-db_path = os.path.join(os.path.dirname(__file__), 'sqlalchemy.sqlite')
-engine = create_engine(f'sqlite:///{db_path}')
+engine = create_engine(DB_ADDRESS)
 
 
 class HarmonogramHospitacji(Base):
@@ -165,7 +165,8 @@ def cleanUpDB() -> None:
     with contextlib.closing(engine.connect()) as con:
         trans = con.begin()
         for table in reversed(metadata.sorted_tables):
-            con.execute(table.delete())
+            if engine.dialect.has_table(engine, table.name):
+                con.execute(table.delete())
         trans.commit()
 
 
