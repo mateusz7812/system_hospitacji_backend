@@ -89,7 +89,7 @@ class KomisjaHospitujaca(Base):
 
     Nauczyciel_akademicki = relationship('NauczycielAkademicki')
     Czlonkowie = relationship(
-        'NauczycielAkademicki', secondary='Komisja_hospitujaca_Nauczyciel_akademicki')
+        'NauczycielAkademicki', secondary='Komisja_hospitujaca_Nauczyciel_akademicki', lazy='subquery')
 
 
 t_Zajecia_Nauczyciel_akademicki = Table(
@@ -218,7 +218,7 @@ def initialize_db():
     nauczyciel1.Pesel = "12312312312"
     nauczyciel1.Należy_do_ZHZ = 1
     nauczyciel1.Tytul = 0
-    nauczyciel1.Imie = "Jan"
+    nauczyciel1.Imie = "Mark"
     nauczyciel1.Nazwisko = "Kowalski"
     nauczyciel1.Haslo = "1234"
     nauczyciel1.Zajecia.append(zajecia2)
@@ -247,14 +247,14 @@ def initialize_db():
 
     komisja1 = KomisjaHospitujaca()
     komisja1.ID = "123komisja"
-    komisja1.PrzewodniczacyID = nauczyciel1.ID
+    komisja1.PrzewodniczacyID = nauczyciel2.ID
     komisja1.Czlonkowie.append(nauczyciel2)
     session.add(komisja1)
     
     komisja2 = KomisjaHospitujaca()
     komisja2.ID = "234komisja"
     komisja2.PrzewodniczacyID = nauczyciel3.ID
-    komisja2.Czlonkowie.append(nauczyciel2)
+    komisja2.Czlonkowie.append(nauczyciel3)
     session.add(komisja2)
 
     harmonogram = HarmonogramHospitacji()
